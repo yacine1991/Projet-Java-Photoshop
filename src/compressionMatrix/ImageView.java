@@ -1,16 +1,14 @@
-
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.color.ColorSpace;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import javax.swing.JPanel;
+import javax.swing.*;
 
-public class ImageView extends JPanel {
+
+public class ImageView extends JLabel implements Scrollable{
+    
     //Représentation graphique de la matrice
-
     private BufferedImage display;
     //La matrice associée à l'image
     private CompressionMatrix matrix;
@@ -18,8 +16,20 @@ public class ImageView extends JPanel {
     private double zoomFactor = 1;
 
     //Construction de l'image à partir d'une matrice donnée
-    public ImageView(CompressionMatrix m) {
+    /*public ImageView(CompressionMatrix m) {
 	matrix = m;
+    }*/
+    
+    public ImageView(CompressionMatrix m){
+        super();
+        matrix = m;
+        display = new BufferedImage((int)(matrix.getWidth()*zoomFactor),
+		(int)(matrix.getHeight()*zoomFactor),
+		BufferedImage.TYPE_3BYTE_BGR);
+        setIcon(new ImageIcon(display));
+        setOpaque(true);
+        setAutoscrolls(true);
+        addMouseMotionListener(new MouseScrolling());
     }
 
     //Peinture de l'image
@@ -41,6 +51,7 @@ public class ImageView extends JPanel {
 
     public void setZoomFactor(double factor){
         zoomFactor = factor;
+	//display = new BufferedImage((int)(matrix.getWidth()*zoomFactor), (int)(matrix.getHeight()*zoomFactor), BufferedImage.TYPE_3BYTE_BGR);
         repaint();
     }
     
@@ -75,7 +86,7 @@ public class ImageView extends JPanel {
 		display.setRGB(x, y, ((color << 16) + (color << 8) + color));
 	    }
 	}
-	//repaint();
+	repaint();
     }
 
     public CompressionMatrix getMatrix() {
@@ -87,6 +98,46 @@ public class ImageView extends JPanel {
     }
     
     /*public BufferedImage drawRect(Graphics g, ArrayList<Rectangle>){
-
     }*/
+    
+    
+    /* Scroll Bar */
+    private int maxUnitIncrement = 10;
+    private class MouseScrolling implements MouseMotionListener{
+		
+        public void mouseDragged(MouseEvent e) {
+            Rectangle r = new Rectangle(e.getX(), e.getY(),0,0);
+            scrollRectToVisible(r);
+        }
+		
+        public void mouseMoved(MouseEvent e) {}
+        
+    }
+    
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+	
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+        int currentPos = orientation==SwingConstants.HORIZONTAL?visibleRect.x:visibleRect.y;
+        int newPos;
+        if(direction<0){
+            newPos = currentPos-(currentPos/maxUnitIncrement)*maxUnitIncrement;
+            return newPos==0?maxUnitIncrement:newPos;
+        }else{
+            return ((currentPos/maxUnitIncrement)+1)*maxUnitIncrement-currentPos;
+        }
+    }
+	
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+        return orientation==SwingConstants.HORIZONTAL?visibleRect.width-maxUnitIncrement:visibleRect.height-maxUnitIncrement;
+    }
+	
+    public boolean getScrollableTracksViewportWidth() {
+        return false;
+    }
+	
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
 }

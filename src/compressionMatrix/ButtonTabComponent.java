@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 /**
+ * Source, site Oracle : fermeture onglet
  * Component to be used as tabComponent;
  * Contains a JLabel to show the text and 
  * a JButton to close the tab it belongs to 

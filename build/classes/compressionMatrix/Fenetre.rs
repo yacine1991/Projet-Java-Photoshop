@@ -13,7 +13,6 @@ Fenetre
 Fenetre$6
 Fenetre$5
 Fenetre$20
-Fenetre$27
 Fenetre$12
 Fenetre$13
 Fenetre$14
