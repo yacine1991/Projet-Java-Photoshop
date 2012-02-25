@@ -2,9 +2,8 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package compressionMatrix;
 
-import java.awt.HeadlessException;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
@@ -33,6 +32,7 @@ public class FenetreBruit extends JDialog{
 	pano.add(j1);
 	pano.add(btnOk);
 	this.add(pano);
+	this.setLocationRelativeTo(this.getParent());
 	setVisible(true);
     } 
     

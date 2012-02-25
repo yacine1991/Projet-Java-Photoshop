@@ -1,19 +1,15 @@
 import java.awt.Rectangle;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ConvolveOp;
-import java.awt.image.Kernel;
+import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import java.io.File;
-import java.io.IOException;
-
-
+import org.jdom.Attribute;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 
 
 public class CompressionMatrix {
@@ -24,7 +20,11 @@ public class CompressionMatrix {
     //savoir si matrice a été modifiée
     private boolean updated = true;
     private double zoomFactor;
-    private int oldpix;
+    //private int oldpix;
+    //racine sauvegarde
+    static Element racine = new Element("image");
+    //On crée un nouveau Document JDOM basé sur la racine que l'on vient de créer
+    static Document document = new Document(racine);
 
     public CompressionMatrix(int h, int w) {
         this();
@@ -103,7 +103,7 @@ public class CompressionMatrix {
     }
 
     /*
-     * Creation du flou de l'image On utilise calculMoyen pour connaitre la
+     * Creation du flou de l'image. On utilise calculMoyen pour connaitre la
      * valeur moyenne des pixels
      */
     public CompressionMatrix flou() {
@@ -134,50 +134,17 @@ public class CompressionMatrix {
         return (somme / nbPixel);
     }
     
+    /*
+     * Creation du flou bilinéaire de l'image. Même procédé que pour le flou
+     * simple sauf qu'on attribut un poids différent pour chaque pixel 
+     * alentour (40% milieu - 10% droit, gauche, haut, bas - 0.05 diagonales)
+     */
     public CompressionMatrix flouBili() {
         updated = true;
         CompressionMatrix cm = new CompressionMatrix(getHeight(), getWidth());
-	
         for (int x = 0; x < getWidth(); x++) {
             for (int y = 0; y < getHeight(); y++) {
-		
-                for (int i = x - 1; i <= x + 1; i++) {
-		    for (int j = y - 1; j <= y + 1; j++) {
-			
-			if (i >= 0 && i < getWidth() && j >= 0 && j < getHeight()) {
-			    //milieu
-			    if(i==x && j==y) {
-				cm.colorPixel(i,j,((int)(getPixelColor(x, y)*0.40)));
-			    }
-			    //coté droit, gauche, haut, bas
-			    if((i==x-1 && j==y) || (i==x+1 && j==y) || (i==x && j==y+1) || (i==x && j==y-1)) {
-				cm.colorPixel(i,j,((int)(getPixelColor(x, y)*0.10)));
-			    }
-			    //diagonales
-			    if((i==x-1 && j==y-1) || (i==x+1 && j==y+1) || (i==x-1 && j==y+1) || (i==x+1 && j==y-1)) {
-				cm.colorPixel(i,j,(int)(getPixelColor(x, y)*0.05));
-			    }
-			    else {
-				cm.colorPixel(i,j,getPixelColor(x, y));
-			    }
-			}
-		    }
-		}
-            }
-        }
-        return cm;
-    }
-    
-    private void calculMoyenBili(int x, int y) {
-        
-    }
-    
-    public CompressionMatrix flouBicu() {
-        updated = true;
-        CompressionMatrix cm = new CompressionMatrix(getHeight(), getWidth());
-        for (int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
-                int x1 = calculMoyen(x, y);
+                int x1 = calculMoyenBili(x, y);
                 if (x1 != 0) {
                     cm.colorPixel(x, y, x1);
                 }
@@ -185,8 +152,122 @@ public class CompressionMatrix {
         }
         return cm;
     }
-
     
+    private int calculMoyenBili(int x, int y) {
+        int somme = 0;
+        int nbPixel = 0;
+        for (int i = x - 1; i <= x + 1; i++) {
+            for (int j = y - 1; j <= y + 1; j++) {
+                if (i >= 0 && i < getWidth() && j >= 0 && j < getHeight()) {
+		    //milieu
+		    if (i == x && j == y) {
+			somme += (this.getPixelColor(i, j)*(1-0.40));
+			nbPixel++;
+		    }
+		    //coté droit, gauche, haut, bas
+		    if ((i == x-1 && j == y) || (i == x+1 && j == y) || 
+			    (i == x && j == y+1) || (i == x && j == y-1)) {
+			
+			somme += (this.getPixelColor(i, j)*(1-0.10));
+			nbPixel++;
+		    }
+		    //diagonales
+		    if ((i == x-1 && j == y-1) || (i == x+1 && j == y+1) || 
+			    (i == x-1 && j == y+1) || (i == x+1 && j == y-1)) {
+			
+			somme += (this.getPixelColor(i, j)*(1-0.05));
+			nbPixel++;
+		    }	
+		}
+	    }
+	}
+	return(somme/nbPixel);
+    }
+     
+    
+    /* Même procédé que bili - edit : pour le calcul de la moyenne, on aurait pu
+     * définir une matrix sur laquelle on pioche la valeur au lieu de faire
+     * cas par cas comme il est fait ici (technique de petit joueur !) 
+     */
+    public CompressionMatrix flouBicu() {
+        updated = true;
+        CompressionMatrix cm = new CompressionMatrix(getHeight(), getWidth());
+        for (int x = 0; x < getWidth(); x++) {
+            for (int y = 0; y < getHeight(); y++) {
+                int x1 = calculMoyenBicu(x, y);
+                if (x1 != 0) {
+                    cm.colorPixel(x, y, x1);
+                }
+            }
+        }
+        return cm;
+    }
+    /* 1-2-3- 2-1
+     * 2-3-5- 3-2
+     * 3-5-39-5-3
+     * 2-3-5- 3-2
+     * 1-2-3- 2-1
+     */
+    private int calculMoyenBicu(int x, int y) {
+        int somme = 0;
+        int nbPixel = 0;
+        for (int i = x - 2; i <= x + 2; i++) {
+            for (int j = y - 2; j <= y + 2; j++) {
+                if (i >= 0 && i < getWidth() && j >= 0 && j < getHeight()) {
+		    //milieu
+		    if (i == x && j == y) {
+			somme += (this.getPixelColor(i, j)*(1-0.39));
+			nbPixel++;
+		    }
+		    
+		    /* PREMIERE COURONNE */
+		    
+		    //coté droit, gauche, haut, bas
+		    if ((i == x-1 && j == y) || (i == x+1 && j == y) || 
+			    (i == x && j == y+1) || (i == x && j == y-1)) {
+			
+			somme += (this.getPixelColor(i, j)*(1-0.05));
+			nbPixel++;
+		    }
+		    //diagonales
+		    if ((i == x-1 && j == y-1) || (i == x+1 && j == y+1) || 
+			    (i == x-1 && j == y+1) || (i == x+1 && j == y-1)) {
+			
+			somme += (this.getPixelColor(i, j)*(1-0.03));
+			nbPixel++;
+		    }	
+		    
+		    /* DEUXIEME COURONNE */
+		    
+		    //coté droit, gauche, haut, bas
+		    if ((i == x-2 && j == y) || (i == x+2 && j == y) || 
+			    (i == x && j == y+2) || (i == x && j == y-2)) {
+			
+			somme += (this.getPixelColor(i, j)*(1-0.03));
+			nbPixel++;
+		    }
+		    
+		    //diagonales
+		    if ((i == x-2 && j == y-2) || (i == x+2 && j == y+ 2) || 
+			    (i == x-2 && j == y+2) || (i == x+2 && j == y-2)) {
+			
+			somme += (this.getPixelColor(i, j)*(1-0.01));
+			nbPixel++;
+		    }
+		    //diagonales 2% (intermédiaire)
+		    if ((i == x-2 && j == y+1) || (i == x + 2 && j == y+1) || 
+			    (i == x+1 && j == y+2) || (i == x-1 && j == y+2)
+			    || (i == x+2 && j == y-1) || (i == x+1 && j == y-2) 
+			    || (i==x-1 && j == y-2) || (i==x-2 && j == y-1)) {
+			
+			somme += (this.getPixelColor(i, j)*(1-0.02));
+			nbPixel++;
+		    }
+		}
+	    }
+	}
+	return(somme/nbPixel);
+    }
 
     public int getWidth() {
         if (width == -1) {
@@ -197,7 +278,7 @@ public class CompressionMatrix {
 
     public int getHeight() {
         if (height == -1) {
-            int max = 0;
+            int max=0;
             for (Integer i : matrix.keySet()) {
                 max = Collections.max(matrix.get(i).keySet());
                 height = max > height ? max : height;
@@ -266,8 +347,8 @@ public class CompressionMatrix {
     //Agrandissement de l'image (ouverture dans un nouvel onglet)
     public CompressionMatrix agrandissement(int zoomFactor) {
         updated = true;
-        int scaledWidth = (int) (getWidth() * zoomFactor);
-        int scaledHeight = (int) (getHeight() * zoomFactor);
+        int scaledWidth = (int)(getWidth() * zoomFactor);
+        int scaledHeight = (int)(getHeight() * zoomFactor);
 
         CompressionMatrix cm = new CompressionMatrix(scaledHeight, scaledWidth);
 
@@ -315,7 +396,7 @@ public class CompressionMatrix {
             for (Integer y : matrix.get(x).keySet()) {
                 int colorpix = getPixelColor(x, y);
                 if (colorpix == 255) {
-                    Rectangle rect = new Rectangle(x, y, 30, 30);
+                    Rectangle rect = new Rectangle(x-20, y+20, 15, 15);
                     rectList.add(rect);
                 }
 
@@ -324,21 +405,32 @@ public class CompressionMatrix {
         return rectList;
     }
 
-    // ----Sauvegarde----//  
+   /* public void detectionEtendue(int x, int y){
+        
+        for(int i = x-1; i<=2; i++ ){
+            for(int j = y-1; j<=2; j++ ){
+                int colorpix = getPixelColor(i, j);
+                if(colorpix!=255)
+            }
 
-    /*public void saveXml() {
+        }
+    }
+*/
+    /* ---- SAUVEGARDE ---- */
+    
+    public void saveXml(String fileName) {
 
         int pc;
-
+        
         for (int x = 0; x < height; x++) {
 
-            Element row = new Element("row");
+            Element row = new Element("row") {};
             racine.addContent(row);
             Attribute index = new Attribute("Index", "" + x);
             row.setAttribute(index);
 
-            for (int y = 0; y < W; y++) {
-                pc = matrix.getPixelColor(x, y);
+            for (int y = 0; y < width; y++) {
+                pc = getPixelColor(x, y);
 		
                 if (pc != 0) {
                     Element pix = new Element("pix");
@@ -350,25 +442,22 @@ public class CompressionMatrix {
                 }
             }
         }
-
-        affiche(); // enregistre("Exercice1.xml"); }
-     
+        enregistre(fileName);  
+    }
     
 
     static void affiche() {
-        try { //On utilise ici un affichage classique avec getPrettyFormat() 
+        try { 
+            //On utilise ici un affichage classique avec getPrettyFormat() 
 	    XMLOutputter sortie = new XMLOutputter(Format.getPrettyFormat());
             sortie.output(document,System.out);
-        } catch (java.io.IOException e) {
-        }
+        } catch (java.io.IOException e) {}
     }
 
     static void enregistre(String fichier) {
-        try { //On utilise ici un affichage classique avec getPrettyFormat() 
-	    XMLOutputter sortie = new XMLOutputter(Format.getPrettyFormat()); 
-	    //Remarquez qu'il suffit simplement de créer une instance de FileOutputStream 
-	    //avec en argument le nom du fichier pour effectuer la sérialisation.sortie.output(document, new FileOutputStream(fichier));
-        } catch (java.io.IOException e) {
-        }
-    }*/
+        try {
+	    XMLOutputter sortie = new XMLOutputter(Format.getPrettyFormat());
+            sortie.output(document, new FileOutputStream(fichier));
+        } catch (java.io.IOException e) {}
+    }
 }

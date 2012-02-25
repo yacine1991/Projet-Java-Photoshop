@@ -1,14 +1,10 @@
 
-import compressionMatrix.FenetreBruit;
-import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Scrollbar;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.awt.image.ComponentColorModel;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -24,7 +20,8 @@ class Fenetre extends JFrame {
     //Panneau à onglet, on le met en global pour pouvoir y accéder partout, et
     //donc pour donner la possibilité à des méthode d'ajouter de nouveaux onglets
     private JTabbedPane tabs;
-
+    private File currentFile;
+    
     //Constructeur qui génère tout 
     public Fenetre() {
 
@@ -56,6 +53,7 @@ class Fenetre extends JFrame {
         JMenuItem openMenu = new JMenuItem("Ouvrir...");
         openMenu.setAccelerator(ctrlO);
         openMenu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 openFile();
             }
@@ -64,6 +62,7 @@ class Fenetre extends JFrame {
         JMenuItem saveCurrent = new JMenuItem("Enregistrer");
         saveCurrent.setAccelerator(ctrlS);
         saveCurrent.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 saveCurrentPanel();
             }
@@ -72,6 +71,7 @@ class Fenetre extends JFrame {
         JMenuItem saveAllFiles = new JMenuItem("Enregistrer tout");
         saveAllFiles.setAccelerator(ctrlAltS);
         saveAllFiles.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 saveAllPanels();
             }
@@ -80,6 +80,7 @@ class Fenetre extends JFrame {
         JMenuItem quitMenu = new JMenuItem("Quitter");
         quitMenu.setAccelerator(altF4);
         quitMenu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 quit();
             }
@@ -96,6 +97,7 @@ class Fenetre extends JFrame {
 
         JMenuItem itEditAnnul = new JMenuItem("Annuler");
         itEditAnnul.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 annuler();
             }
@@ -103,6 +105,7 @@ class Fenetre extends JFrame {
         
         JMenuItem itEditReta = new JMenuItem("Rétablir");
         itEditReta.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 retablir();
             }
@@ -110,6 +113,7 @@ class Fenetre extends JFrame {
         
         JMenuItem itEditCopier = new JMenuItem("Copier");
         itEditCopier.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copier();
             }
@@ -117,6 +121,7 @@ class Fenetre extends JFrame {
         
         JMenuItem itEditColle = new JMenuItem("Coller");
         itEditColle.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 coller();
             }
@@ -136,6 +141,7 @@ class Fenetre extends JFrame {
 	
         JMenuItem flouSimple = new JMenuItem("Flou simple");
         flouSimple.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 flou();
             }
@@ -143,6 +149,7 @@ class Fenetre extends JFrame {
 	
 	JMenuItem flouBili = new JMenuItem("Flou bilinéaire");
         flouBili.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 flouBili();
             }
@@ -150,19 +157,31 @@ class Fenetre extends JFrame {
 	
 	JMenuItem flouBicu = new JMenuItem("Flou Bicubique");
         flouBicu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 flouBicu();
+            }
+        });
+        
+        JMenuItem flouZone = new JMenuItem("Flou de zone");
+        flouZone.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                flouZone();
             }
         });
 	
 	flouMenu.add(flouSimple);
         flouMenu.add(flouBili);
         flouMenu.add(flouBicu);
+        flouMenu.addSeparator();
+        flouMenu.add(flouZone);
         
         /* ---- Negatif ---- */
         
         JMenuItem negativeMenu = new JMenuItem("Negatif");
         negativeMenu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 negateImage();
             }
@@ -172,8 +191,18 @@ class Fenetre extends JFrame {
         
 	JMenuItem suppressionBruit = new JMenuItem("Suppression bruit");
 	suppressionBruit.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 suppBruit();
+            }
+        });
+
+
+        JMenuItem detectionEtoile = new JMenuItem("Detection étoile");
+	detectionEtoile.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                etoile();
             }
         });
         
@@ -183,6 +212,7 @@ class Fenetre extends JFrame {
 	
 	JMenuItem rotat90Menu = new JMenuItem("90°");
         rotat90Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 rotation90();
             }
@@ -190,6 +220,7 @@ class Fenetre extends JFrame {
 	
 	JMenuItem rotat180Menu = new JMenuItem("180°");
         rotat180Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 rotation180();
             }
@@ -197,6 +228,7 @@ class Fenetre extends JFrame {
 	
 	JMenuItem rotat270Menu = new JMenuItem("270°");
         rotat270Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 rotation270();
             }
@@ -212,6 +244,7 @@ class Fenetre extends JFrame {
 	
 	JMenuItem miroirVMenu = new JMenuItem("Horizontal");
         miroirVMenu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 miroirV();
             }
@@ -219,6 +252,7 @@ class Fenetre extends JFrame {
 	
 	JMenuItem miroirHMenu = new JMenuItem("Vertical");
         miroirHMenu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 miroirH();
             }
@@ -233,6 +267,7 @@ class Fenetre extends JFrame {
         transformationsMenu.addSeparator();
         transformationsMenu.add(rotationMenu);
 	transformationsMenu.add(miroirMenu);
+        transformationsMenu.add(detectionEtoile);
         
         JMenu affichageMenu = new JMenu("Affichage");
         
@@ -242,6 +277,7 @@ class Fenetre extends JFrame {
 
         JMenuItem zoom1Menu = new JMenuItem("x1");
         zoom1Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 zoom(1);
             }
@@ -249,6 +285,7 @@ class Fenetre extends JFrame {
         
         JMenuItem zoom2Menu = new JMenuItem("x2");
         zoom2Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 zoom(2);
             }
@@ -256,6 +293,7 @@ class Fenetre extends JFrame {
         
         JMenuItem zoom3Menu = new JMenuItem("x3");
         zoom3Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 zoom(3);
             }
@@ -263,6 +301,7 @@ class Fenetre extends JFrame {
 	
         JMenuItem zoom4Menu = new JMenuItem("x4");
         zoom4Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 zoom(4);
             }
@@ -270,7 +309,7 @@ class Fenetre extends JFrame {
         
         JMenuItem zoom5Menu = new JMenuItem("x5");
         zoom5Menu.addActionListener(new ActionListener() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 zoom(5);
             }
@@ -288,6 +327,7 @@ class Fenetre extends JFrame {
 
         JMenuItem agrand1Menu = new JMenuItem("x1");
         agrand1Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 agrandissement(1);
             }
@@ -295,6 +335,7 @@ class Fenetre extends JFrame {
         
         JMenuItem agrand2Menu = new JMenuItem("x2");
         agrand2Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 agrandissement(2);
             }
@@ -302,6 +343,7 @@ class Fenetre extends JFrame {
         
         JMenuItem agrand3Menu = new JMenuItem("x3");
         agrand3Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 agrandissement(3);
             }
@@ -309,6 +351,7 @@ class Fenetre extends JFrame {
 	
         JMenuItem agrand4Menu = new JMenuItem("x4");
         agrand4Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 agrandissement(4);
             }
@@ -316,6 +359,7 @@ class Fenetre extends JFrame {
         
         JMenuItem agrand5Menu = new JMenuItem("x5");
         agrand5Menu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 agrandissement(5);
             }
@@ -446,6 +490,10 @@ class Fenetre extends JFrame {
 	//tabs.addTab("Agrandissement x"+factor, new ImageView(getMatrix().agrandissement(factor)));
         tabs.setTabComponentAt(tabs.getTabCount()-1,new ButtonTabComponent(tabs));
     }
+
+    private void etoile() {
+	getImageViewFromSelectedTab().showRects();
+	}
     
     private void flou() {
 	addWithScrollBars("Flou",new ImageView(getImageViewFromSelectedTab().getMatrix().flou()));
@@ -461,6 +509,13 @@ class Fenetre extends JFrame {
     
     private void flouBicu() {
 	addWithScrollBars("Flou bicubique",new ImageView(getImageViewFromSelectedTab().getMatrix().flouBicu()));
+	//tabs.addTab("Flou bicubique", new ImageView(getMatrix().flouBicu()));
+        tabs.setTabComponentAt(tabs.getTabCount()-1,new ButtonTabComponent(tabs));
+    }
+    
+     private void flouZone() {
+        FenetreFlouZone ffz = new FenetreFlouZone();
+	addWithScrollBars("Flou de zone",new ImageView(getImageViewFromSelectedTab().getMatrix().flouBicu()));
 	//tabs.addTab("Flou bicubique", new ImageView(getMatrix().flouBicu()));
         tabs.setTabComponentAt(tabs.getTabCount()-1,new ButtonTabComponent(tabs));
     }
@@ -509,7 +564,15 @@ class Fenetre extends JFrame {
     }
 
     private void saveCurrentPanel() {
-        //A compléter
+       JFileChooser chooser = new JFileChooser();
+        int res = chooser.showSaveDialog(this);
+        if (res == JFileChooser.APPROVE_OPTION) {
+            currentFile = chooser.getSelectedFile(); 
+            String fileName = currentFile.getAbsolutePath();
+            try {
+                getImageViewFromSelectedTab().getMatrix().saveXml(fileName);
+            } catch (Exception e) {}
+        }
     }
 
     private void saveAllPanels() {
